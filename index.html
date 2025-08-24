@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moon Phase Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ffeb3b, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #b0b0b0;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn.active {
+            background: linear-gradient(45deg, #ffd700, #ffeb3b);
+            color: #333;
+        }
+        
+        .moon-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .moon-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .moon-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .moon-card.today {
+            border: 2px solid #ffd700;
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
+        }
+        
+        .moon-icon {
+            font-size: 6rem;
+            margin: 20px 0;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .today .moon-icon {
+            animation: float 3s ease-in-out infinite, glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 215, 0, 0.5); }
+        }
+        
+        .date {
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .phase-name {
+            font-size: 1.8rem;
+            margin: 15px 0;
+            font-weight: bold;
+            color: #e6e6fa;
+        }
+        
+        .illumination {
+            font-size: 1.1rem;
+            color: #b0b0b0;
+            margin: 10px 0;
+        }
+        
+        .phase-description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #888;
+            margin-top: 15px;
+        }
+        
+        .current-info {
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .forecast-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .forecast-grid.active {
+            display: grid;
+        }
+        
+        .today-view {
+            display: grid;
+            grid-template-columns: 1fr;
+            justify-items: center;
+        }
+        
+        .today-view.active {
+            display: grid;
+        }
+        
+        .today-view:not(.active) {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+            
+            .moon-display {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <header>
+            <h1>🌙 Moon Phase Tracker</h1>
+            <p class="subtitle">Track lunar cycles with precision</p>
+        </header>
+        
+        <div class="controls">
+            <button class="btn active" id="todayBtn">Today's Phase</button>
+            <button class="btn" id="forecastBtn">Next 7 Days</button>
+        </div>
+        
+        <div class="current-info" id="currentInfo">
+            <div id="currentDate"></div>
+        </div>
+        
+        <div class="today-view active" id="todayView">
+            <div class="moon-card today" id="todayCard">
+                <div class="date" id="todayDate">Today</div>
+                <div class="moon-icon" id="todayMoonIcon">🌕</div>
+                <div class="phase-name" id="todayPhaseName">Full Moon</div>
+                <div class="illumination" id="todayIllumination">100% Illuminated</div>
+                <div class="phase-description" id="todayPhaseDescription">
+                    The moon appears fully illuminated from Earth's perspective.
+                </div>
+            </div>
+        </div>
+        
+        <div class="forecast-grid" id="forecastGrid">
+            <!-- Forecast cards will be generated here -->
+        </div>
+    </div>
+
+    <script>
+        // Create twinkling stars background
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 150;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // Calculate moon phase based on date
+        function calculateMoonPhase(date) {
+            // Known new moon: January 11, 2024 at 11:57 UTC
+            const knownNewMoon = new Date('2024-01-11T11:57:00Z');
+            const lunarCycle = 29.53058867; // Average lunar cycle in days
+            
+            // Calculate days since known new moon
+            const daysSince = (date.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24);
+            
+            // Calculate phase (0 = new moon, 0.5 = full moon, 1 = new moon again)
+            let phase = (daysSince % lunarCycle) / lunarCycle;
+            if (phase < 0) phase += 1; // Handle negative values
+            
+            return phase;
+        }
+        
+        // Get moon phase information
+        function getMoonPhaseInfo(phase) {
+            // Calculate illumination percentage
+            let illumination;
+            if (phase <= 0.5) {
+                illumination = phase * 2 * 100; // Waxing
+            } else {
+                illumination = (2 - phase * 2) * 100; // Waning
+            }
+            illumination = Math.round(illumination);
+            
+            // Determine phase name and icon
+            if (phase < 0.02 || phase > 0.98) {
+                return {
+                    name: "New Moon",
+                    icon: "🌑",
+                    description: "The moon is not visible from Earth as it's positioned between Earth and the Sun.",
+                    illumination: 0
+                };
+            } else if (phase < 0.23) {
+                return {
+                    name: "Waxing Crescent",
+                    icon: "🌒",
+                    description: "A thin crescent of light appears on the right side of the moon as it grows.",
+                    illumination: illumination
+                };
+            } else if (phase < 0.27) {
+                return {
+                    name: "First Quarter",
+                    icon: "🌓",
+                    description: "Half of the moon is illuminated on the right side, resembling a half-circle.",
+                    illumination: 50
+                };
+            } else if (phase < 0.48) {
+                return {
+                    name: "Waxing Gibbous",
+                    icon: "🌔",
+                    description: "More than half of the moon is illuminated, growing towards full moon.",
+                    illumination: illumination
+                };
+            } else if (phase < 0.52) {
+                return {
+                    name: "Full Moon",
+                    icon: "🌕",
+                    description: "The moon appears fully illuminated, providing maximum brightness at night.",
+                    illumination: 100
+                };
+            } else if (phase < 0.73) {
+                return {
+                    name: "Waning Gibbous",
+                    icon: "🌖",
+                    description: "More than half illuminated but decreasing, after the full moon phase.",
+                    illumination: illumination
+                };
+            } else if (phase < 0.77) {
+                return {
+                    name: "Last Quarter",
+                    icon: "🌗",
+                    description: "Half of the moon is illuminated on the left side as it wanes.",
+                    illumination: 50
+                };
+            } else {
+                return {
+                    name: "Waning Crescent",
+                    icon: "🌘",
+                    description: "A thin crescent of light on the left side as the moon approaches new moon.",
+                    illumination: illumination
+                };
+            }
+        }
+        
+        // Format date for display
+        function formatDate(date, isToday = false) {
+            if (isToday) {
+                return `Today, ${date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })}`;
+            }
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Update today's moon phase
+        function updateTodayPhase() {
+            const today = new Date();
+            const phase = calculateMoonPhase(today);
+            const phaseInfo = getMoonPhaseInfo(phase);
+            
+            document.getElementById('todayDate').textContent = formatDate(today, true);
+            document.getElementById('todayMoonIcon').textContent = phaseInfo.icon;
+            document.getElementById('todayPhaseName').textContent = phaseInfo.name;
+            document.getElementById('todayIllumination').textContent = `${phaseInfo.illumination}% Illuminated`;
+            document.getElementById('todayPhaseDescription').textContent = phaseInfo.description;
+            
+            // Update current info
+            document.getElementById('currentDate').innerHTML = `
+                <strong>Current Moon Phase:</strong> ${phaseInfo.name} ${phaseInfo.icon}<br>
+                <small>${formatDate(today, true)}</small>
+            `;
+        }
+        
+        // Generate 7-day forecast
+        function generateForecast() {
+            const forecastGrid = document.getElementById('forecastGrid');
+            forecastGrid.innerHTML = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                
+                const phase = calculateMoonPhase(date);
+                const phaseInfo = getMoonPhaseInfo(phase);
+                
+                const card = document.createElement('div');
+                card.className = `moon-card ${i === 0 ? 'today' : ''}`;
+                card.innerHTML = `
+                    <div class="date">${i === 0 ? 'Today' : formatDate(date)}</div>
+                    <div class="moon-icon">${phaseInfo.icon}</div>
+                    <div class="phase-name">${phaseInfo.name}</div>
+                    <div class="illumination">${phaseInfo.illumination}% Illuminated</div>
+                    <div class="phase-description">${phaseInfo.description}</div>
+                `;
+                
+                forecastGrid.appendChild(card);
+            }
+        }
+        
+        // Handle view switching
+        function switchView(view) {
+            const todayBtn = document.getElementById('todayBtn');
+            const forecastBtn = document.getElementById('forecastBtn');
+            const todayView = document.getElementById('todayView');
+            const forecastGrid = document.getElementById('forecastGrid');
+            
+            if (view === 'today') {
+                todayBtn.classList.add('active');
+                forecastBtn.classList.remove('active');
+                todayView.classList.add('active');
+                forecastGrid.classList.remove('active');
+            } else {
+                todayBtn.classList.remove('active');
+                forecastBtn.classList.add('active');
+                todayView.classList.remove('active');
+                forecastGrid.classList.add('active');
+                generateForecast();
+            }
+        }
+        
+        // Initialize the app
+        function initApp() {
+            createStars();
+            updateTodayPhase();
+            
+            // Set up event listeners
+            document.getElementById('todayBtn').addEventListener('click', () => switchView('today'));
+            document.getElementById('forecastBtn').addEventListener('click', () => switchView('forecast'));
+            
+            // Update every hour to keep data current
+            setInterval(updateTodayPhase, 3600000);
+        }
+        
+        // Start the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
